@@ -7,26 +7,51 @@ from PIL import Image
 import requests
 from io import BytesIO
 
-def GetImages(sub = "aww", number = 9, sort = "score"):
+def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha = False):
     
-    """sort types: score, created_utc"""
+    """
+    subreddit: the subreddit you want to pull images from
+    
+    sort types: score, created_utc. Basically sorting by "top all time" or "new"
+    
+    number: limit on the number of images you want to pull. For constant stream you can try float("inf")
+    
+    alpha: keeps alpha channel if there is one. For working with numpy you probably want to keep it at false
+    
+    """
     
     global api
     
-    submissions = api.search_submissions(subreddit = sub, filter = ['url'], sort_type=sort)
+    posts = api.search_submissions(subreddit = subreddit, filter = ["url", "permalink"], sort_type = sort)
     
     count = 0
-    for post in submissions:
-        url = str(post.url).strip("\|/")
+    
+    for post in posts:
+        url = str(post.url)
         
-        # check if a post is an image
+        # sadly nothing I can do about this try-except.
         
-        if url.endswith("jpg") or url.endswith("jpeg") or url.endswith("png"):
-            
-            # pull an image
-            response = requests.get(url)
-            yield Image.open(BytesIO(response.content))
-            count += 1
-            # end generator when required number of images reached
-            if count > number - 1:
-                break
+        if "png" in url or "jpg" in url or "jpeg" in url:
+            try:
+                response = requests.get(url)
+            except:
+                continue
+        else:
+            continue
+
+        status = response.status_code
+        # was getting UnidentifiedImageError but removing these codes should eliminate the error
+        # also filters out "this image was deleted" image from stream
+        if status == 404 or status == 406 or status == 504:
+            continue
+
+        tmp = Image.open(BytesIO(response.content))
+
+
+        if alpha:
+            yield tmp
+        else:
+            yield tmp.convert("RGB")
+        count += 1
+        if count >= number:
+            break
