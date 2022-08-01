@@ -13,12 +13,13 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from io import BytesIO
 
-def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha=False):
+def GetImages(subreddit = "aww", number = 1, sort = "created_utc", alpha=False, before = None, after=None):
     
     """
     subreddit: the subreddit you want to pull images from
     
-    sort types: score, created_utc. Basically sorting by "top all time" or "new". I highly suggest using new instead of top, as I could pull 40,000 images in one go using new, while top broke at thousand. 
+    sort types: score, created_utc. Basically sorting by "top all time" or "new"
+    I highly suggest using new instead of top, as I could pull 40,000 images in one go using new, while top broke at thousand. 
     
     number: limit on the number of images you want to pull. For constant stream you can try float("inf")
     
@@ -27,7 +28,11 @@ def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha=False):
     
     global api
     
-    posts = api.search_submissions(subreddit = subreddit, filter = ["url", "permalink"], sort_type = sort)
+    posts = api.search_submissions(subreddit = subreddit,
+                                   filter = ["url", "permalink"],
+                                   sort_type = sort,
+                                   before = before,
+                                   after = after)
     
     count = 0
     
@@ -58,7 +63,9 @@ def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha=False):
             continue
         except OSError:
             continue
-
+        
+        print(post.permalink)
+        
         # avoids having alpha channel
         if alpha:
             yield tmp.convert("RGBA")
