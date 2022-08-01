@@ -1,24 +1,21 @@
-import praw
+# !pip install psaw
+import psaw
 from psaw import PushshiftAPI
+import numpy as np
 
 api = psaw.PushshiftAPI()
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+
+# Image might be too big, causing an exception from PIL
+# Image.MAX_IMAGE_PIXELS = None
+
 import requests
 from io import BytesIO
 
-def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha = False):
+def GetImages(subreddit = "aww", number = 9, sort = "created_utc"):
     
-    """
-    subreddit: the subreddit you want to pull images from
-    
-    sort types: score, created_utc. Basically sorting by "top all time" or "new". I highly suggest using new instead of top, as I could pull 40,000 images in one go using new, while top broke at thousand. 
-    
-    number: limit on the number of images you want to pull. For constant stream you can try float("inf")
-    
-    alpha: keeps alpha channel if there is one. For working with numpy you probably want to keep it at false
-    
-    """
+    """sort types: score, created_utc"""
     
     global api
     
@@ -29,29 +26,33 @@ def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha = False
     for post in posts:
         url = str(post.url)
         
-        # sadly nothing I can do about this try-except.
-        
         if "png" in url or "jpg" in url or "jpeg" in url:
             try:
                 response = requests.get(url)
             except:
+                # print("RequestError")
+                # print(post.permalink)
                 continue
         else:
             continue
 
         status = response.status_code
-        # was getting UnidentifiedImageError but removing these codes should eliminate the error
-        # also filters out "this image was deleted" image from stream
         if status == 404 or status == 406 or status == 504:
             continue
 
-        tmp = Image.open(BytesIO(response.content))
+        try:
+            tmp = Image.open(BytesIO(response.content))
+        except UnidentifiedImageError:
+            # print(post.permalink)
+            continue
+        # not sure if possible to check size before loading as image
+        except Image.DecompressionBombError:
+            continue
+        except OSError:
+            continue
 
-
-        if alpha:
-            yield tmp
-        else:
-            yield tmp.convert("RGB")
+        # avoids having alpha channel
+        yield tmp.convert("RGB")
         count += 1
         if count >= number:
             break
