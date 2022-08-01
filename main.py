@@ -70,7 +70,7 @@ def GetImages(subreddit = "aww", number = 1, sort = "created_utc", alpha=False, 
         except OSError:
             continue
         
-        print(post.permalink)
+        # print(post.permalink)
         
         # avoids having alpha channel
         if alpha:
