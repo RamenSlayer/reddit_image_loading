@@ -13,9 +13,17 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from io import BytesIO
 
-def GetImages(subreddit = "aww", number = 9, sort = "created_utc"):
+def GetImages(subreddit = "aww", number = 9, sort = "created_utc", alpha=False):
     
-    """sort types: score, created_utc"""
+    """
+    subreddit: the subreddit you want to pull images from
+    
+    sort types: score, created_utc. Basically sorting by "top all time" or "new". I highly suggest using new instead of top, as I could pull 40,000 images in one go using new, while top broke at thousand. 
+    
+    number: limit on the number of images you want to pull. For constant stream you can try float("inf")
+    
+    alpha: keeps alpha channel if there is one. For working with numpy you probably want to keep it at false
+    """
     
     global api
     
@@ -52,7 +60,10 @@ def GetImages(subreddit = "aww", number = 9, sort = "created_utc"):
             continue
 
         # avoids having alpha channel
-        yield tmp.convert("RGB")
+        if alpha:
+            yield tmp.convert("RGBA")
+        else:
+            yield tmp.convert("RGB")
         count += 1
         if count >= number:
             break
