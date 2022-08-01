@@ -24,6 +24,12 @@ def GetImages(subreddit = "aww", number = 1, sort = "created_utc", alpha=False, 
     number: limit on the number of images you want to pull. For constant stream you can try float("inf")
     
     alpha: keeps alpha channel if there is one. For working with numpy you probably want to keep it at false
+    
+    before: date in format "yyyy-mm-dd" (example: "2020-01-01")
+            or date time in format "yyyy-mm-dd hh:mm:ss" (example: "2020-01-01 22:22:22")
+    
+    after: date in format "yyyy-mm-dd" (example: "2020-01-01")
+           or date time in format "yyyy-mm-dd hh:mm:ss" (example: "2020-01-01 22:22:22")
     """
     
     global api
